@@ -17,11 +17,13 @@ st.markdown("""
 This application uses an advanced **Random Forest Classifier** trained on 87 structural, content, and network features to determine whether a given web link is **Legitimate** or a **Phishing scam**.
 """)
 
-# Load Model
+# Load Model Freely (Handles both raw model files or dictionary objects)
 @st.cache_resource
 def load_model_data():
-    data = joblib.load('phishing_detector_model.pkl')
-    return data['model'], data['features']
+    loaded_data = joblib.load('phishing_detector_model.pkl')
+    if isinstance(loaded_data, dict):
+        return loaded_data['model'], loaded_data['features']
+    return loaded_data, list(loaded_data.feature_names_in_)
 
 try:
     model, feature_names = load_model_data()
@@ -59,7 +61,6 @@ with tab1:
     
     with col1:
         st.subheader("📋 Key URL Features Found")
-        # Display a subset of interesting features
         display_features = {
             "URL Length": features_dict.get('length_url'),
             "Hostname Length": features_dict.get('length_hostname'),
@@ -107,7 +108,7 @@ with tab2:
         missing_feats = [f for f in feature_names if f not in input_data.columns]
         
         if missing_feats:
-            st.error(f"Uploaded CSV is missing required model features: {missing_feats[:5]}...")
+            st.error(f"Uploaded CSV is missing required model features.")
         else:
             if st.button("Run Batch Prediction"):
                 with st.spinner("Processing rows..."):
